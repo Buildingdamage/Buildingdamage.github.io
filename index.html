@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buildingdamage</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-search@2.9.8/dist/leaflet-search.min.css" />
     <style>
         #map { height: 100vh; margin: 0; }
 
@@ -31,6 +32,7 @@
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-search@2.9.8/dist/leaflet-search.min.js"></script>
     <script>
         var map = L.map('map').setView([32.0478311, 35.1635749], 14);
 
@@ -53,6 +55,7 @@
         };
 
         const overlayLayers = {};
+        let buildingLayer; // نحتفظ بطبقة المباني لأداة البحث
 
         Object.keys(styles).forEach(file => {
             fetch(file)
@@ -61,8 +64,13 @@
                     const layer = L.geoJSON(data, {
                         style: styles[file],
                         onEachFeature: function (feature, layer) {
-                            if (file === 'Building.geojson' && feature.properties.Status) {
-                                layer.bindPopup("Status: " + feature.properties.Status);
+                            if (file === 'Building.geojson') {
+                                if (feature.properties.Status || feature.properties.BlockNumbe) {
+                                    layer.bindPopup(
+                                        "Status: " + feature.properties.Status +
+                                        "<br>BlockNumbe: " + feature.properties.BlockNumbe
+                                    );
+                                }
                             }
                         }
                     });
@@ -70,17 +78,36 @@
                     const layerName = file.split('.')[0];
                     overlayLayers[layerName] = layer;
                     layer.addTo(map);
+
+                    if (file === 'Building.geojson') {
+                        buildingLayer = layer;
+
+                        // أداة البحث
+                        const searchControl = new L.Control.Search({
+                            layer: buildingLayer,
+                            propertyName: 'BlockNumbe', // يمكنك تغييره إلى 'Status' إذا أردت
+                            marker: false,
+                            moveToLocation: function(latlng, title, map) {
+                                map.setView(latlng, 17);
+                            }
+                        });
+
+                        searchControl.on('search:locationfound', function(e) {
+                            e.layer.openPopup();
+                        });
+
+                        map.addControl(searchControl);
+                    }
                 });
         });
 
-        // إضافة أداة التحكم بالطبقات
+        // التحكم في الطبقات
         setTimeout(() => {
             L.control.layers(null, overlayLayers, { collapsed: false }).addTo(map);
         }, 1000);
 
-        // إضافة الليجند (وسيلة الإيضاح)
+        // وسيلة الإيضاح
         const legend = L.control({ position: 'bottomright' });
-
         legend.onAdd = function (map) {
             const div = L.DomUtil.create('div', 'legend');
             div.innerHTML += "<b>وسيلة الإيضاح</b><br>";
@@ -92,7 +119,6 @@
             div.innerHTML += '<i style="background: black"></i> Roads Outside<br>';
             return div;
         };
-
         legend.addTo(map);
     </script>
 </body>
