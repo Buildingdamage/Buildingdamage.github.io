@@ -61,8 +61,8 @@
                     const layer = L.geoJSON(data, {
                         style: styles[file],
                         onEachFeature: function (feature, layer) {
-                            if (file === 'Building.geojson' && feature.properties.BlockNumbe) {
-                                layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
+                            if (file === 'Building.geojson' && feature.properties.Status) {
+                                layer.bindPopup("Status: " + feature.properties.Status);
                             }
                         }
                     });
