@@ -55,7 +55,7 @@
         };
 
         const overlayLayers = {};
-        let buildingLayer; // نحتفظ بطبقة المباني لأداة البحث
+        let buildingLayer;
 
         Object.keys(styles).forEach(file => {
             fetch(file)
@@ -64,14 +64,7 @@
                     const layer = L.geoJSON(data, {
                         style: styles[file],
                         onEachFeature: function (feature, layer) {
-                            if (file === 'Building.geojson') {
-                                if (feature.properties.Status || feature.properties.BlockNumbe) {
-                                    layer.bindPopup(
-                                        "Status: " + feature.properties.Status +
-                                        "<br>BlockNumbe: " + feature.properties.BlockNumbe
-                                    );
-                                }
-                            }
+                            // لا نضيف أي bindPopup
                         }
                     });
 
@@ -82,18 +75,13 @@
                     if (file === 'Building.geojson') {
                         buildingLayer = layer;
 
-                        // أداة البحث
                         const searchControl = new L.Control.Search({
                             layer: buildingLayer,
                             propertyName: 'BlockNumbe', // يمكنك تغييره إلى 'Status' إذا أردت
                             marker: false,
                             moveToLocation: function(latlng, title, map) {
-                                map.setView(latlng, 17);
+                                map.setView(latlng, 17); // تكبير للموقع فقط بدون popup
                             }
-                        });
-
-                        searchControl.on('search:locationfound', function(e) {
-                            e.layer.openPopup();
                         });
 
                         map.addControl(searchControl);
@@ -101,7 +89,7 @@
                 });
         });
 
-        // التحكم في الطبقات
+        // التحكم بالطبقات
         setTimeout(() => {
             L.control.layers(null, overlayLayers, { collapsed: false }).addTo(map);
         }, 1000);
