@@ -22,7 +22,7 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // تحديد الأنماط حسب الملف
+        // الأنماط لكل ملف
         const styles = {
             'Mazare_Alnoubani.json': { color: 'blue', weight: 2, fillOpacity: 0 },
             'Urban_Master_Plan.json': { color: 'green', weight: 2, fillOpacity: 0.3 },
@@ -39,6 +39,7 @@
 
         let buildingLayer;
 
+        // تحميل كل ملف GeoJSON
         Object.keys(styles).forEach(file => {
             fetch(file)
                 .then(res => res.json())
@@ -46,31 +47,36 @@
                     const layer = L.geoJSON(data, {
                         style: styles[file],
                         onEachFeature: function (feature, layer) {
+                            // ربط popup بالمباني
                             if (file === 'Building.geojson' && feature.properties.BlockNumbe) {
                                 layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
                             }
                         }
                     }).addTo(map);
 
+                    // إذا الملف هو ملف المباني، فعل أداة البحث
                     if (file === 'Building.geojson') {
                         buildingLayer = layer;
 
+                        // تفعيل البحث
                         const searchControl = new L.Control.Search({
                             layer: buildingLayer,
                             propertyName: 'BlockNumbe',
                             marker: false,
                             moveToLocation: function(latlng, title, map) {
-                                map.setView(latlng, 16);
+                                map.setView(latlng, 17); // تكبير أقرب
                             }
                         });
 
+                        // فتح popup عند العثور
                         searchControl.on('search:locationfound', function(e) {
                             e.layer.openPopup();
                         });
 
                         map.addControl(searchControl);
                     }
-                });
+                })
+                .catch(err => console.error('Error loading file:', file, err));
         });
     </script>
 </body>
