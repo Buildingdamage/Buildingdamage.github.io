@@ -16,68 +16,50 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-search@2.9.8/dist/leaflet-search.min.js"></script>
     <script>
+        // إنشاء الخريطة
         var map = L.map('map').setView([32.0478311, 35.1635749], 14);
 
+        // إضافة طبقة الأساس
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // الأنماط لكل ملف
-        const styles = {
-            'Mazare_Alnoubani.json': { color: 'blue', weight: 2, fillOpacity: 0 },
-            'Urban_Master_Plan.json': { color: 'green', weight: 2, fillOpacity: 0.3 },
-            'Block_Mazare1.json': { color: 'orange', weight: 2, fillOpacity: 0.4 },
-            'Block_Mazare2.json': { color: 'orange', weight: 2, fillOpacity: 0.4 },
-            'Block_Mazare3.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
-            'Block_Mazare4.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
-            'Block_Mazare5.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
-            'Block_Mazare6.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
-            'Building.geojson': { color: 'red', weight: 2, fillOpacity: 0.6 },
-            'Roads_InSide.json': { color: 'gray', weight: 2 },
-            'Roads_OutSide.json': { color: 'black', weight: 2 }
-        };
-
-        let buildingLayer;
-
-        // تحميل كل ملف GeoJSON
-        Object.keys(styles).forEach(file => {
-            fetch(file)
-                .then(res => res.json())
-                .then(data => {
-                    const layer = L.geoJSON(data, {
-                        style: styles[file],
-                        onEachFeature: function (feature, layer) {
-                            // ربط popup بالمباني
-                            if (file === 'Building.geojson' && feature.properties.BlockNumbe) {
-                                layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
-                            }
+        // تحميل طبقة المباني فقط (لضمان عمل البحث بشكل صحيح أولاً)
+        fetch('Building.geojson')
+            .then(res => res.json())
+            .then(data => {
+                // إضافة طبقة GeoJSON للمباني
+                var buildingLayer = L.geoJSON(data, {
+                    style: {
+                        color: 'red',
+                        weight: 2,
+                        fillOpacity: 0.6
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties && feature.properties.BlockNumbe) {
+                            layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
                         }
-                    }).addTo(map);
-
-                    // إذا الملف هو ملف المباني، فعل أداة البحث
-                    if (file === 'Building.geojson') {
-                        buildingLayer = layer;
-
-                        // تفعيل البحث
-                        const searchControl = new L.Control.Search({
-                            layer: buildingLayer,
-                            propertyName: 'BlockNumbe',
-                            marker: false,
-                            moveToLocation: function(latlng, title, map) {
-                                map.setView(latlng, 17); // تكبير أقرب
-                            }
-                        });
-
-                        // فتح popup عند العثور
-                        searchControl.on('search:locationfound', function(e) {
-                            e.layer.openPopup();
-                        });
-
-                        map.addControl(searchControl);
                     }
-                })
-                .catch(err => console.error('Error loading file:', file, err));
-        });
+                }).addTo(map);
+
+                // إنشاء أداة البحث
+                var searchControl = new L.Control.Search({
+                    layer: buildingLayer,
+                    propertyName: 'BlockNumbe',
+                    marker: false,
+                    moveToLocation: function(latlng, title, map) {
+                        map.setView(latlng, 17); // تكبير عند تحديد النتيجة
+                    }
+                });
+
+                // فتح النافذة المنبثقة عند العثور على النتيجة
+                searchControl.on('search:locationfound', function(e) {
+                    e.layer.openPopup();
+                });
+
+                map.addControl(searchControl);
+            })
+            .catch(error => console.error("فشل تحميل ملف Building.geojson:", error));
     </script>
 </body>
 </html>
