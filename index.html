@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Building Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buildingdamage</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-search@2.9.8/dist/leaflet-search.min.css" />
     <style>
-        #map { height: 100vh; }
+        #map { height: 100vh; margin: 0; }
     </style>
 </head>
 <body>
@@ -21,39 +22,56 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        fetch('Building.geojson')
-            .then(res => res.json())
-            .then(data => {
-                var buildingLayer = L.geoJSON(data, {
-                    style: {
-                        color: 'red',
-                        weight: 2,
-                        fillOpacity: 0.6
-                    },
-                    onEachFeature: function (feature, layer) {
-                        if (feature.properties && feature.properties.BlockNumbe) {
-                            layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
+        // تحديد الأنماط حسب الملف
+        const styles = {
+            'Mazare_Alnoubani.json': { color: 'blue', weight: 2, fillOpacity: 0 },
+            'Urban_Master_Plan.json': { color: 'green', weight: 2, fillOpacity: 0.3 },
+            'Block_Mazare1.json': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare2.json': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare3.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare4.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare5.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare6.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Building.geojson': { color: 'red', weight: 2, fillOpacity: 0.6 },
+            'Roads_InSide.json': { color: 'gray', weight: 2 },
+            'Roads_OutSide.json': { color: 'black', weight: 2 }
+        };
+
+        let buildingLayer;
+
+        Object.keys(styles).forEach(file => {
+            fetch(file)
+                .then(res => res.json())
+                .then(data => {
+                    const layer = L.geoJSON(data, {
+                        style: styles[file],
+                        onEachFeature: function (feature, layer) {
+                            if (file === 'Building.geojson' && feature.properties.BlockNumbe) {
+                                layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
+                            }
                         }
-                    }
-                }).addTo(map);
+                    }).addTo(map);
 
-                var searchControl = new L.Control.Search({
-                    layer: buildingLayer,
-                    propertyName: 'BlockNumbe',
-                    marker: false,
-                    position: 'topleft',  // ← غيّر الموقع إذا لزم
-                    moveToLocation: function(latlng, title, map) {
-                        map.setView(latlng, 17);
+                    if (file === 'Building.geojson') {
+                        buildingLayer = layer;
+
+                        const searchControl = new L.Control.Search({
+                            layer: buildingLayer,
+                            propertyName: 'BlockNumbe',
+                            marker: false,
+                            moveToLocation: function(latlng, title, map) {
+                                map.setView(latlng, 16);
+                            }
+                        });
+
+                        searchControl.on('search:locationfound', function(e) {
+                            e.layer.openPopup();
+                        });
+
+                        map.addControl(searchControl);
                     }
                 });
-
-                searchControl.on('search:locationfound', function(e) {
-                    e.layer.openPopup();
-                });
-
-                map.addControl(searchControl);
-            })
-            .catch(err => console.error("Error loading Building.geojson:", err));
+        });
     </script>
 </body>
 </html>
