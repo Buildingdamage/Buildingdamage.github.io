@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buildingdamage</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-search@2.9.8/dist/leaflet-search.min.css" />
     <style>
         #map { height: 100vh; margin: 0; }
     </style>
@@ -14,7 +13,6 @@
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-search@2.9.8/dist/leaflet-search.min.js"></script>
     <script>
         var map = L.map('map').setView([32.0478311, 35.1635749], 14);
 
@@ -22,6 +20,7 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
+        // تحديد الأنماط حسب الملف
         const styles = {
             'Mazare_Alnoubani.json': { color: 'blue', weight: 2, fillOpacity: 0 },
             'Urban_Master_Plan.json': { color: 'green', weight: 2, fillOpacity: 0.3 },
@@ -36,8 +35,6 @@
             'Roads_OutSide.json': { color: 'black', weight: 2 }
         };
 
-        let buildingLayer; // لتخزين طبقة المباني
-
         Object.keys(styles).forEach(file => {
             fetch(file)
                 .then(res => res.json())
@@ -50,26 +47,6 @@
                             }
                         }
                     }).addTo(map);
-
-                    if (file === 'Building.geojson') {
-                        buildingLayer = layer;
-
-                        // إضافة أداة البحث
-                        const searchControl = new L.Control.Search({
-                            layer: buildingLayer,
-                            propertyName: 'BlockNumbe',
-                            marker: false,
-                            moveToLocation: function(latlng, title, map) {
-                                map.setView(latlng, 18); // تكبير على الموقع
-                            }
-                        });
-
-                        searchControl.on('search:locationfound', function(e) {
-                            e.layer.openPopup();
-                        });
-
-                        map.addControl(searchControl);
-                    }
                 });
         });
     </script>
