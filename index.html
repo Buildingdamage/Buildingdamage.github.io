@@ -20,7 +20,6 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // تحديد الأنماط حسب الملف
         const styles = {
             'Mazare_Alnoubani.json': { color: 'blue', weight: 2, fillOpacity: 0 },
             'Urban_Master_Plan.json': { color: 'green', weight: 2, fillOpacity: 0.3 },
@@ -35,6 +34,8 @@
             'Roads_OutSide.json': { color: 'black', weight: 2 }
         };
 
+        const overlayLayers = {};
+
         Object.keys(styles).forEach(file => {
             fetch(file)
                 .then(res => res.json())
@@ -46,9 +47,19 @@
                                 layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
                             }
                         }
-                    }).addTo(map);
+                    });
+
+                    // استخراج اسم الطبقة بدون الامتداد
+                    const layerName = file.split('.')[0];
+                    overlayLayers[layerName] = layer;
+                    layer.addTo(map);
                 });
         });
+
+        // إضافة أداة التحكم بالطبقات بعد التأكد من تحميل الطبقات
+        setTimeout(() => {
+            L.control.layers(null, overlayLayers, { collapsed: false }).addTo(map);
+        }, 1000); // الانتظار لفترة قصيرة حتى تُحمّل الطبقات
     </script>
 </body>
 </html>
