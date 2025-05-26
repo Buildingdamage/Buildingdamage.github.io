@@ -22,28 +22,23 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // تعيين الأنماط الخاصة بكل ملف
+        // تحديد الأنماط حسب الملف
         const styles = {
-            'Building.geojson': {
-                color: 'red',
-                weight: 2,
-                fillOpacity: 0.6
-            },
-            'Mazare_Alnoubani.json': {
-                color: 'blue',
-                weight: 2,
-                fillOpacity: 0
-            },
-            'Urban_Master_Plan.json': {
-                color: 'green',
-                weight: 2,
-                fillOpacity: 0.3
-            }
+            'Building.geojson': { color: 'red', weight: 2, fillOpacity: 0.6 },
+            'Mazare_Alnoubani.json': { color: 'blue', weight: 2, fillOpacity: 0 },
+            'Urban_Master_Plan.json': { color: 'green', weight: 2, fillOpacity: 0.3 },
+            'Block_Mazare1.json': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare2.json': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare3.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare4.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare5.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Block_Mazare6.geojson': { color: 'orange', weight: 2, fillOpacity: 0.4 },
+            'Roads_InSide.json': { color: 'gray', weight: 2 },
+            'Roads_OutSide.json': { color: 'black', weight: 2 }
         };
 
-        let buildingLayer; // طبقة المباني لحفظها لاحقًا
+        let buildingLayer;
 
-        // تحميل الملفات GeoJSON
         Object.keys(styles).forEach(file => {
             fetch(file)
                 .then(res => res.json())
@@ -51,17 +46,15 @@
                     const layer = L.geoJSON(data, {
                         style: styles[file],
                         onEachFeature: function (feature, layer) {
-                            if (file === 'Building.geojson') {
+                            if (file === 'Building.geojson' && feature.properties.BlockNumbe) {
                                 layer.bindPopup("BlockNumbe: " + feature.properties.BlockNumbe);
                             }
                         }
                     }).addTo(map);
 
-                    // حفظ طبقة المباني لتفعيل البحث عليها
                     if (file === 'Building.geojson') {
                         buildingLayer = layer;
 
-                        // أداة البحث بناءً على الحقل "BlockNumbe"
                         const searchControl = new L.Control.Search({
                             layer: buildingLayer,
                             propertyName: 'BlockNumbe',
