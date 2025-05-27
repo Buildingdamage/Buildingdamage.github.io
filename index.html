@@ -61,8 +61,18 @@
                     const layer = L.geoJSON(data, {
                         style: styles[file],
                         onEachFeature: function (feature, layer) {
-                            if (file === 'Building.geojson' && feature.properties.Status) {
-                                layer.bindPopup("Status: " + feature.properties.Status);
+                            if (file === 'Building.geojson') {
+                                let props = feature.properties;
+                                let popupContent = `
+                                    <b>Status:</b> ${props.Status || 'N/A'}<br>
+                                    <b>CommunityN:</b> ${props.CommunityN || 'N/A'}<br>
+                                    <b>Location:</b> ${props.Location || 'N/A'}<br>
+                                    <b>BlockNumbe:</b> ${props.BlockNumbe || 'N/A'}<br>
+                                    <b>BlockName_:</b> ${props.BlockName_ || 'N/A'}<br>
+                                    <b>ParcelNumb:</b> ${props.ParcelNumb || 'N/A'}<br>
+                                    <b>NEAR_DIST:</b> ${props.NEAR_DIST || 'N/A'}
+                                `;
+                                layer.bindPopup(popupContent);
                             }
                         }
                     });
