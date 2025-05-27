@@ -25,9 +25,33 @@
             vertical-align: middle;
             opacity: 0.7;
         }
+
+        .search-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        .search-box input {
+            width: 120px;
+            padding: 5px;
+        }
+
+        .search-box button {
+            padding: 5px 10px;
+        }
     </style>
 </head>
 <body>
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="TARGET_FID" />
+        <button onclick="searchByTargetFID()">بحث</button>
+    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -53,6 +77,7 @@
         };
 
         const overlayLayers = {};
+        let buildingLayer; // لتخزين طبقة المباني لأداة البحث
 
         Object.keys(styles).forEach(file => {
             fetch(file)
@@ -70,7 +95,8 @@
                                     <b>BlockNumbe:</b> ${props.BlockNumbe || 'N/A'}<br>
                                     <b>BlockName_:</b> ${props.BlockName_ || 'N/A'}<br>
                                     <b>ParcelNumb:</b> ${props.ParcelNumb || 'N/A'}<br>
-                                    <b>NEAR_DIST:</b> ${props.NEAR_DIST || 'N/A'}
+                                    <b>NEAR_DIST:</b> ${props.NEAR_DIST || 'N/A'}<br>
+                                    <b>TARGET_FID:</b> ${props.TARGET_FID || 'N/A'}
                                 `;
                                 layer.bindPopup(popupContent);
                             }
@@ -80,15 +106,35 @@
                     const layerName = file.split('.')[0];
                     overlayLayers[layerName] = layer;
                     layer.addTo(map);
+
+                    if (file === 'Building.geojson') {
+                        buildingLayer = layer;
+                    }
                 });
         });
 
-        // إضافة أداة التحكم بالطبقات
-        setTimeout(() => {
-            L.control.layers(null, overlayLayers, { collapsed: false }).addTo(map);
-        }, 1000);
+        // وظيفة البحث عن طريق TARGET_FID
+        function searchByTargetFID() {
+            const targetFID = document.getElementById("search-input").value.trim();
+            if (!targetFID || !buildingLayer) return;
 
-        // إضافة الليجند (وسيلة الإيضاح)
+            let found = false;
+
+            buildingLayer.eachLayer(function (layer) {
+                const props = layer.feature.properties;
+                if (props.TARGET_FID != null && props.TARGET_FID.toString() === targetFID) {
+                    map.setView(layer.getBounds().getCenter(), 17);
+                    layer.openPopup();
+                    found = true;
+                }
+            });
+
+            if (!found) {
+                alert("لم يتم العثور على TARGET_FID.");
+            }
+        }
+
+        // إضافة وسيلة الإيضاح
         const legend = L.control({ position: 'bottomright' });
 
         legend.onAdd = function (map) {
@@ -104,6 +150,11 @@
         };
 
         legend.addTo(map);
+
+        // إضافة أداة التحكم بالطبقات
+        setTimeout(() => {
+            L.control.layers(null, overlayLayers, { collapsed: false }).addTo(map);
+        }, 1000);
     </script>
 </body>
 </html>
